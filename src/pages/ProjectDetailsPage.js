@@ -1,25 +1,27 @@
-// src/pages/ProjectDetailsPage.js
-
 import { useState, useEffect } from "react";
+import { useParams, Link } from 'react-router-dom';
 import axios from "axios";
+import AddTask from "../components/AddTask";
+import TaskCard from "../components/TaskCard";
 
-import { Link, useParams } from "react-router-dom"; // <== IMPORT 
+
+const API_URL = "http://localhost:5005";
 
 
- 
-const API_URL = "http://localhost:5005";        // <== ADD
- 
 function ProjectDetailsPage (props) {
   const [project, setProject] = useState(null);
-  // Get the URL parameter `:projectId` 
-  const { projectId } = useParams();            // <== ADD
+  const { projectId } = useParams();
   
-  
-  // Helper function that makes a GET request to the API
-  // and retrieves the project by id
-  const getProject = () => {          //  <== ADD A NEW FUNCTION
+  const getProject = () => {
+    // Get the token from the localStorage
+    const storedToken = localStorage.getItem("authToken");
+   
+    // Send the token through the request "Authorization" Headers
     axios
-      .get(`${API_URL}/api/projects/${projectId}`)
+      .get(
+        `${API_URL}/api/projects/${projectId}`,
+        { headers: { Authorization: `Bearer ${storedToken}` } }
+      )
       .then((response) => {
         const oneProject = response.data;
         setProject(oneProject);
@@ -28,41 +30,36 @@ function ProjectDetailsPage (props) {
   };
   
   
-  useEffect(()=> {                   // <== ADD AN EFFECT
+  useEffect(()=> {
     getProject();
   }, [] );
- 
+
   
   return (
     <div className="ProjectDetails">
+    
       {project && (
         <>
           <h1>{project.title}</h1>
           <p>{project.description}</p>
         </>
       )}
- 
-      {project &&
-        project.tasks.map((task) => (
-          <li className="TaskCard card" key={task._id}>
-            <h3>{task.title}</h3>
-            <h4>Description:</h4>
-            <p>{task.description}</p>
-          </li>
-        ))}
- 
+
+      
+      <AddTask refreshProject={getProject} projectId={projectId} />          
+
+      { project && project.tasks.map((task) => <TaskCard key={task._id} {...task} /> )} 
+
       <Link to="/projects">
         <button>Back to projects</button>
       </Link>
-      
-      {/*    ADD    */}
+          
       <Link to={`/projects/edit/${projectId}`}>
         <button>Edit Project</button>
-      </Link>      
+      </Link>
       
     </div>
   );
 }
- 
+
 export default ProjectDetailsPage;
- 
